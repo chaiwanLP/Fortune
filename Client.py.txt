@@ -1,0 +1,464 @@
+from customtkinter import *
+from PIL import Image, ImageSequence
+import random
+import os
+import tkinter as tk
+
+set_appearance_mode("light")
+set_default_color_theme("green")
+
+class FortuneGardenApp:
+    def __init__(self):
+        self.app = CTk()
+        self.app.title("Fortune Garden")
+        self.app.geometry("550x750")
+        
+        # ตั้งค่าฟอนต์
+        self.font_title = ("Kanit", 32, "bold")
+        self.font_sub = ("Kanit", 16)
+        self.font_button = ("Kanit", 14)
+        
+        # โหลดรูปดอกไม้ PNG
+        self.load_flower_images()
+        
+        # โหลด GIF
+        self.load_gif()
+        
+        # สร้างพื้นหลัง
+        self.create_background()
+        
+        # สร้าง UI (ไม่มีพื้นหลัง)
+        self.create_ui()
+        
+        # ตัวแปรสำหรับ overlay
+        self.overlay = None
+        self.gif_label = None
+        self.animation_frames = []
+        self.frame_delays = []  
+        self.current_frame = 0
+        self.animation_id = None  
+        
+    def load_flower_images(self):
+        """โหลดรูปดอกไม้ PNG"""
+        self.flower_images = []
+        flower_files = ["m1.png", "m2.png", "m3.png", "m4.png", "m5.png"]
+        
+        self.use_png = False
+        
+        for i, file in enumerate(flower_files):
+            if os.path.exists(file):
+                try:
+                    img = Image.open(file)
+                    img = img.resize((40, 40))
+                    self.flower_images.append(CTkImage(light_image=img, dark_image=img, size=(40, 40)))
+                    self.use_png = True
+                    print(f"✅ โหลดรูป {file} สำเร็จ")
+                except:
+                    print(f"❌ โหลดรูป {file} ไม่สำเร็จ")
+        
+        if not self.use_png:
+            print("⚠️ ไม่พบรูป PNG ใช้ Emoji แทน")
+    
+    def load_gif(self):
+        """โหลด GIF"""
+        gif_files = ["animation.gif", "star.gif", "sparkle.gif", "magic.gif"]
+        self.gif_path = None
+        
+        for file in gif_files:
+            if os.path.exists(file):
+                self.gif_path = file
+                print(f"✅ โหลด GIF {file} สำเร็จ")
+                break
+        
+        if not self.gif_path:
+            print("⚠️ ไม่พบไฟล์ GIF")
+    
+    def create_background(self):
+        """สร้างพื้นหลัง"""
+        try:
+            img = Image.open("bg.PNG")
+            img = img.resize((550, 750))
+            
+            self.bg_img = CTkImage(light_image=img, dark_image=img, size=(550, 750))
+            
+            self.bg_label = CTkLabel(
+                self.app, 
+                image=self.bg_img, 
+                text=""
+            )
+            self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+            
+            print("✅ โหลดพื้นหลังสำเร็จ")
+            
+        except Exception as e:
+            print(f"❌ โหลดพื้นหลังไม่สำเร็จ: {e}")
+            self.app.configure(fg_color="#FFE4E1")
+    
+    def create_overlay(self):
+        """สร้าง overlay สีขาวล้วน"""
+        if self.overlay:
+            self.overlay.destroy()
+        
+        # สร้าง Frame สีขาวล้วน
+        self.overlay = CTkFrame(
+            self.app,
+            fg_color="#FFFFFF",  # สีขาวล้วน
+            corner_radius=0,
+            width=550,
+            height=750
+        )
+        self.overlay.place(x=0, y=0)
+    
+    def show_gif_animation(self):
+        """แสดง GIF อนิเมชั่น"""
+        if not self.gif_path:
+            return
+        
+        try:
+            # ลบ GIF เก่าถ้ามี
+            if self.gif_label:
+                self.gif_label.destroy()
+            
+            # ยกเลิก animation เก่า
+            if self.animation_id:
+                self.app.after_cancel(self.animation_id)
+                self.animation_id = None
+            
+            # โหลด GIF
+            gif = Image.open(self.gif_path)
+            self.animation_frames = []
+            self.frame_delays = []
+            
+            # แยกเฟรมของ GIF และเก็บความหน่วง
+            for frame in ImageSequence.Iterator(gif):
+                frame = frame.resize((300, 300))
+                self.animation_frames.append(CTkImage(light_image=frame, dark_image=frame, size=(300, 300)))
+                
+                # ดึงความหน่วงของเฟรม (ค่าเริ่มต้น 100ms ถ้าไม่มี)
+                try:
+                    delay = frame.info.get('duration', 100)
+                    # Pillow คืนค่าเป็น milliseconds
+                    self.frame_delays.append(delay)
+                except:
+                    self.frame_delays.append(100)  # ค่าเริ่มต้น 100ms
+            
+            print(f"✅ โหลด GIF สำเร็จ: {len(self.animation_frames)} เฟรม")
+            print(f"📊 ความหน่วงเฉลี่ย: {sum(self.frame_delays)/len(self.frame_delays):.0f}ms")
+            
+            # สร้าง Label สำหรับแสดง GIF
+            self.gif_label = CTkLabel(
+                self.app,
+                text="",
+                image=self.animation_frames[0],
+                fg_color="transparent"
+            )
+            self.gif_label.place(relx=0.5, rely=0.5, anchor="center")
+            
+            # เริ่มอนิเมชั่น
+            self.current_frame = 0
+            self.animate_gif()
+            
+            # ตั้งเวลาซ่อน GIF หลังจาก 3 วินาที
+            self.app.after(3000, self.hide_gif_animation)
+            
+        except Exception as e:
+            print(f"❌ ไม่สามารถแสดง GIF: {e}")
+    
+    def animate_gif(self):
+        """ทำให้ GIF เคลื่อนไหวด้วยความเร็วที่เหมาะสม"""
+        if self.gif_label and self.animation_frames:
+            try:
+                # ข้ามไปเฟรมถัดไป
+                self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
+                self.gif_label.configure(image=self.animation_frames[self.current_frame])
+                
+                # ใช้ความหน่วงของเฟรมปัจจุบัน หรือเฟรมถัดไป
+                delay = self.frame_delays[self.current_frame]
+                
+                # ถ้าความหน่วงน้อยเกินไป ให้ปรับเพิ่มเล็กน้อยเพื่อให้ดู smoother
+                if delay < 50:
+                    delay = 80
+                
+                # เรียกใช้ตัวเองอีกครั้งด้วยความหน่วงที่เหมาะสม
+                self.animation_id = self.app.after(delay, self.animate_gif)
+                
+            except Exception as e:
+                print(f"❌ เกิดข้อผิดพลาดใน animation: {e}")
+    
+    def hide_gif_animation(self):
+        """ซ่อน GIF และ overlay"""
+        # ยกเลิก animation
+        if self.animation_id:
+            self.app.after_cancel(self.animation_id)
+            self.animation_id = None
+        
+        if self.overlay:
+            self.overlay.destroy()
+            self.overlay = None
+        
+        if self.gif_label:
+            self.gif_label.destroy()
+            self.gif_label = None
+            self.animation_frames = []
+            self.frame_delays = []
+    
+    def create_ui(self):
+        # หัวข้อ - ไม่มีพื้นหลัง
+        self.title = CTkLabel(
+            self.app, 
+            text="🌸 Fortune Garden 🌸",
+            font=self.font_title,
+            text_color="#FF69B4",
+            fg_color="transparent"  # โปร่งใส
+        )
+        self.title.place(relx=0.5, y=40, anchor="n")
+        
+        # คำอวยพร - ไม่มีพื้นหลัง
+        self.greeting_label = CTkLabel(
+            self.app, 
+            text="✨ เลือกราศีของคุณเพื่อดูดวง ✨",
+            font=("Kanit", 14),
+            text_color="#9370DB",
+            fg_color="transparent"  # โปร่งใส
+        )
+        self.greeting_label.place(relx=0.5, y=100, anchor="n")
+        
+        # ข้อมูล 12 ราศี
+        self.zodiac = [
+            ("♈ เมษ", "21 มี.ค. - 19 เม.ย.", "#FFB6C1"),
+            ("♉ พฤษภ", "20 เม.ย. - 20 พ.ค.", "#FFDAB9"),
+            ("♊ เมถุน", "21 พ.ค. - 20 มิ.ย.", "#E6E6FA"),
+            ("♋ กรกฎ", "21 มิ.ย. - 22 ก.ค.", "#B0E0E6"),
+            ("♌ สิงห์", "23 ก.ค. - 22 ส.ค.", "#FFA07A"),
+            ("♍ กันย์", "23 ส.ค. - 22 ก.ย.", "#98FB98"),
+            ("♎ ตุล", "23 ก.ย. - 22 ต.ค.", "#DDA0DD"),
+            ("♏ พิจิก", "23 ต.ค. - 21 พ.ย.", "#FBCEB1"),
+            ("♐ ธนู", "22 พ.ย. - 21 ธ.ค.", "#B0E57C"),
+            ("♑ มังกร", "22 ธ.ค. - 19 ม.ค.", "#FFC3A0"),
+            ("♒ กุมภ์", "20 ม.ค. - 18 ก.พ.", "#A7C7E7"),
+            ("♓ มีน", "19 ก.พ. - 20 มี.ค.", "#C4A484")
+        ]
+        
+        # Scrollable frame - ไม่มีพื้นหลัง
+        self.scroll_frame = CTkScrollableFrame(
+            self.app, 
+            fg_color="transparent",  # โปร่งใส
+            width=500,
+            height=400,
+            corner_radius=20
+        )
+        self.scroll_frame.place(relx=0.5, y=160, anchor="n")
+        
+        # สร้างปุ่ม
+        self.create_zodiac_buttons()
+        
+        # ผลลัพธ์ - ไม่มีพื้นหลัง
+        self.result_label = CTkLabel(
+            self.app, 
+            text="✨ รอเลือกราศีอยู่ ✨",
+            font=("Kanit", 18),
+            text_color="#FF69B4",
+            fg_color="transparent",  # โปร่งใส
+            wraplength=400
+        )
+        self.result_label.place(relx=0.5, y=620, anchor="n")
+        
+        # ปุ่มสุ่ม - มีพื้นหลังเฉพาะปุ่ม
+        self.random_btn = CTkButton(
+            self.app,
+            text="🎲 สุ่มราศี 🎲",
+            font=("Kanit", 16, "bold"),
+            fg_color="#FFB6C1",
+            hover_color="#FFA0B0",
+            corner_radius=30,
+            width=200,
+            height=40,
+            command=self.random_zodiac
+        )
+        self.random_btn.place(relx=0.5, y=690, anchor="n")
+        
+        # เส้นแบ่งบางๆ (optional)
+        self.separator = CTkFrame(self.app, fg_color="#FFB6C1", height=2, width=400)
+        self.separator.place(relx=0.5, y=600, anchor="n")
+        
+        # สร้างดอกไม้ลอย
+        self.create_floating_flowers()
+        
+        # อนิเมชั่นหัวข้อ
+        self.animate_title()
+    
+    def create_zodiac_buttons(self):
+        """สร้างปุ่มราศี"""
+        self.buttons = []
+        
+        for i, (name, date, color) in enumerate(self.zodiac):
+            # ไม่มี Frame หุ้ม
+            btn = CTkButton(
+                self.scroll_frame,
+                text=f"{name}\n{date}",
+                font=self.font_button,
+                width=140,
+                height=90,
+                corner_radius=25,
+                fg_color=color,
+                hover_color=self.adjust_color(color, -20),
+                text_color="#4A4A4A",
+                command=lambda n=name, c=color: self.show_fortune_with_effects(n, c)
+            )
+            btn.grid(row=i//3, column=i%3, padx=10, pady=10)
+            
+            self.bind_hover_effects(btn)
+            self.buttons.append(btn)
+    
+    def bind_hover_effects(self, button):
+        def on_enter(e):
+            button.configure(text_color="#FF1493", width=150, height=100)
+        def on_leave(e):
+            button.configure(text_color="#4A4A4A", width=140, height=90)
+        button.bind("<Enter>", on_enter)
+        button.bind("<Leave>", on_leave)
+    
+    def adjust_color(self, color, amount):
+        if color.startswith("#"):
+            try:
+                r = int(color[1:3], 16)
+                g = int(color[3:5], 16)
+                b = int(color[5:7], 16)
+                r = max(0, min(255, r + amount))
+                g = max(0, min(255, g + amount))
+                b = max(0, min(255, b + amount))
+                return f"#{r:02x}{g:02x}{b:02x}"
+            except:
+                return color
+        return color
+    
+    def show_fortune_with_effects(self, name, color):
+        """แสดงคำทำนายพร้อม overlay สีขาวและ GIF"""
+        fortunes = [
+            "🌟 โชคดีที่สุดในวันนี้",
+            "💖 ความรักกำลังมาเยือน",
+            "💰 การเงินดีมีโชคลาภ",
+            "📚 การงานก้าวหน้า",
+            "🌈 มีความสุขสมหวัง",
+            "⭐ พบเจอแต่สิ่งดีๆ",
+            "🎉 โชคลาภกำลังมา",
+            "🌸 ความสุขใกล้ตัว",
+            "🦋 โอกาสใหม่กำลังมา",
+            "✨ สมหวังดังใจ"
+        ]
+        fortune = random.choice(fortunes)
+        self.result_label.configure(text=f"🌺 {name}\n{fortune}")
+        
+        # สร้าง overlay สีขาวล้วน
+        self.create_overlay()
+        
+        # แสดง GIF อนิเมชั่น
+        self.show_gif_animation()
+        
+        # แสดงข้อความเพิ่มเติม (ถ้าต้องการ)
+        self.show_extra_message()
+    
+    def show_extra_message(self):
+        """แสดงข้อความเพิ่มเติมชั่วคราว"""
+        extra_label = CTkLabel(
+            self.app,
+            text="✨ รับคำทำนายเรียบร้อย ✨",
+            font=("Kanit", 16, "bold"),
+            text_color="#000000",  # เปลี่ยนเป็นสีดำให้เห็นบนพื้นขาว
+            fg_color="transparent"
+        )
+        extra_label.place(relx=0.5, y=350, anchor="n")
+        
+        # ซ่อนข้อความหลังจาก 2 วินาที
+        self.app.after(2000, extra_label.destroy)
+    
+    def random_zodiac(self):
+        random_index = random.randint(0, len(self.zodiac)-1)
+        random_name, _, random_color = self.zodiac[random_index]
+        self.show_fortune_with_effects(random_name, random_color)
+        
+        for i, btn in enumerate(self.buttons):
+            if i == random_index:
+                original_color = btn.cget("fg_color")
+                btn.configure(fg_color="#FFD700")
+                self.app.after(300, lambda b=btn, oc=original_color: b.configure(fg_color=oc))
+    
+    def create_floating_flowers(self):
+        """สร้างดอกไม้ลอย"""
+        self.flower_labels = []
+        
+        if self.use_png and self.flower_images:
+            for i in range(8):
+                flower_img = random.choice(self.flower_images)
+                
+                label = CTkLabel(
+                    self.app,
+                    image=flower_img,
+                    text="",
+                    fg_color="transparent"
+                )
+                
+                x = random.randint(20, 500)
+                y = random.randint(20, 700)
+                label.place(x=x, y=y)
+                self.flower_labels.append(label)
+                self.float_flower(label, x, y, i)
+        else:
+            flowers = ["🌸", "🌼", "🌺", "🌻", "🌷"]
+            for i in range(8):
+                flower = random.choice(flowers)
+                label = CTkLabel(
+                    self.app,
+                    text=flower,
+                    font=("Arial", random.randint(20, 30)),
+                    fg_color="transparent",
+                    text_color=random.choice(["#FF69B4", "#9370DB", "#FFA07A"])
+                )
+                
+                x = random.randint(20, 500)
+                y = random.randint(20, 700)
+                label.place(x=x, y=y)
+                self.flower_labels.append(label)
+                self.float_flower(label, x, y, i)
+    
+    def float_flower(self, label, start_x, start_y, index):
+        """ทำให้ดอกไม้ลอยขึ้นลง"""
+        direction_y = 1 if index % 2 == 0 else -1
+        direction_x = 1 if index % 3 == 0 else -1
+        offset_y = 0
+        offset_x = 0
+        
+        def move():
+            nonlocal offset_y, offset_x
+            try:
+                offset_y = (offset_y + 1) % 40
+                offset_x = (offset_x + 1) % 60
+                
+                new_y = start_y + 15 * direction_y * ((offset_y % 20) - 10) / 10
+                new_x = start_x + 10 * direction_x * ((offset_x % 30) - 15) / 15
+                
+                if 20 <= new_y <= 700 and 20 <= new_x <= 500:
+                    label.place(x=new_x, y=new_y)
+                    
+                self.app.after(100, move)
+            except:
+                pass
+        
+        self.app.after(index * 200, move)
+    
+    def animate_title(self):
+        colors = ["#FF69B4", "#9370DB", "#4169E1", "#FFA07A"]
+        def change_color(i=0):
+            try:
+                self.title.configure(text_color=colors[i % len(colors)])
+                self.app.after(1000, lambda: change_color(i+1))
+            except:
+                pass
+        change_color()
+    
+    def run(self):
+        self.app.mainloop()
+
+if __name__ == "__main__":
+    app = FortuneGardenApp()
+    app.run()
