@@ -14,8 +14,7 @@ set_window_scaling(1.2)
 # ─────────────────────────────────────────
 #  Server Config
 # ─────────────────────────────────────────
-SERVER_IP   = "127.0.0.1"
-SERVER_PORT = 5000
+BROADCAST_PORT = 5000
 UDP_TIMEOUT = 5
 
 CATEGORY_TO_SERVER_KEY = {
@@ -25,13 +24,40 @@ CATEGORY_TO_SERVER_KEY = {
     "work":    "education",
 }
 
+def discover_server() -> str | None:
+    """ค้นหา server อัตโนมัติในวงแลน"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.settimeout(3)
+        
+        # ส่ง broadcast ไปทั้งวงแลน
+        sock.sendto(b"DISCOVER_FORTUNE_SERVER", ("255.255.255.255", BROADCAST_PORT))
+        
+        data, addr = sock.recvfrom(1024)
+        sock.close()
+        
+        if data == b"FORTUNE_SERVER_HERE":
+            print(f"พบ server ที่ {addr[0]}")
+            return addr[0]  # คืน IP ของ server
+    except Exception as e:
+        print(f"[UDP DISCOVER ERROR] {e}")
+    return None
+
 
 def udp_ask_fortune(category_key: str) -> str | None:
     server_key = CATEGORY_TO_SERVER_KEY.get(category_key, category_key)
+    
+    # ค้นหา server อัตโนมัติ
+    server_ip = discover_server()
+    if not server_ip:
+        print("[!] ไม่พบ server ในวงแลน")
+        return None
+    
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(UDP_TIMEOUT)
-        sock.sendto(server_key.strip().encode("utf-8"), (SERVER_IP, SERVER_PORT))
+        sock.sendto(server_key.strip().encode("utf-8"), (server_ip, BROADCAST_PORT))
         data, _ = sock.recvfrom(4096)
         sock.close()
         return data.decode("utf-8")
