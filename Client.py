@@ -161,7 +161,6 @@ ZODIAC_DATA = [
     ("♓ มีน",   "💧 ธาตุน้ำ | ช่างฝัน", "#7986CB"),
 ]
 
-FLOAT_EMOJIS  = ["🌸", "🌼", "🌺", "✨", "🌷", "🦋", "🐞", "🍀", "⭐", "🌟"]
 TITLE_COLORS  = ["#FF1493", "#9370DB", "#4169E1", "#FF6347", "#FF69B4", "#FFD700"]
 FLOWER_FILES  = ["m1.png", "m2.png", "m3.png", "m4.png", "m5.png"]
 
@@ -181,10 +180,10 @@ def adjust_color(hex_color: str, amount: int) -> str:
 class FortuneGardenApp:
     def __init__(self):
         self.app = CTk()
-        self.app.title("🌸 Fortune Garden - ดูดวงสไตล์ญี่ปุ่น")
+        self.app.title("Fortune Garden")
         self.app.geometry("800x750")
         self.app.resizable(False, False)
-
+        self.load_gif_frames("text_from_me.gif")
         self.selected_category = None
         self._current_zodiac_name = ""
         self._current_zodiac_color = "#FF6B8B"
@@ -239,7 +238,7 @@ class FortuneGardenApp:
 
         self.title_label = CTkLabel(
             self.category_frame,
-            text="🌸 Fortune Garden 🌸",
+            text=" Fortune Garden ",
             font=F_APP_TITLE,
             text_color="#FF1493",
             fg_color="transparent",
@@ -256,7 +255,7 @@ class FortuneGardenApp:
 
         CTkLabel(
             self.category_frame,
-            text="✨ เลือกด้านที่อยากรู้ ✨",
+            text=" เลือกด้านที่อยากรู้ ",
             font=F_PAGE_TITLE,
             text_color="#9932CC",
             fg_color="transparent",
@@ -338,7 +337,7 @@ class FortuneGardenApp:
 
         CTkLabel(
             self.zodiac_frame,
-            text="✨ กดราศีเพื่อรับคำทำนาย ✨",
+            text=" ... กดราศีเพื่อรับคำทำนาย ...",
             font=F_SUBTITLE,
             text_color="#9932CC",
             fg_color="transparent",
@@ -382,6 +381,30 @@ class FortuneGardenApp:
         self.scroll_frame.pack(pady=10)
 
         self._create_zodiac_buttons()
+
+    def load_gif_frames(self, path):
+        self.gif_frames = []
+
+        gif = Image.open(path)
+
+        for frame in range(gif.n_frames):
+            gif.seek(frame)
+            img = gif.copy().resize((120,120))
+
+            self.gif_frames.append(
+                CTkImage(light_image=img, dark_image=img, size=(120,120))
+            )
+
+        self.gif_index = 0
+    def animate_gif(self):
+
+        frame = self.gif_frames[self.gif_index]
+
+        self.lbl_icon.configure(image=frame)
+
+        self.gif_index = (self.gif_index + 1) % len(self.gif_frames)
+
+        self.app.after(80, self.animate_gif)
 
     def _create_zodiac_buttons(self):
         self.zodiac_buttons = []
@@ -450,9 +473,11 @@ class FortuneGardenApp:
         )
         self.lbl_category_badge.pack(pady=(5, 10))
 
-        # ไอคอน
-        self.lbl_icon = CTkLabel(content, text="🔮", font=F_ICON_BIG)
+        self.load_gif_frames("text_from_me.gif")
+        self.lbl_icon = CTkLabel(content, text="")
         self.lbl_icon.pack()
+
+        self.animate_gif()
 
         # ชื่อราศี
         self.lbl_zodiac = CTkLabel(content, text="", font=F_ZODIAC_NAME)
@@ -465,7 +490,7 @@ class FortuneGardenApp:
         # ข้อความคำทำนาย (มาจาก server)
         self.lbl_body = CTkLabel(
             content,
-            text="✨ กดรับคำทำนายเพื่อเชื่อมต่อกับ Server ✨",
+            text=" กดรับคำทำนายเพื่อเชื่อมต่อกับ Server ",
             font=F_FORTUNE_B,
             wraplength=580,
             justify="center",
@@ -475,7 +500,7 @@ class FortuneGardenApp:
         # ปุ่มรับคำทำนาย
         self.fetch_btn = CTkButton(
             content,
-            text="🔮 รับคำทำนาย",
+            text="รับคำทำนาย",
             font=F_BTN_MAIN,
             command=self.fetch_fortune,
             corner_radius=30,
@@ -512,10 +537,9 @@ class FortuneGardenApp:
         )
 
         self.lbl_zodiac.configure(text=name, text_color=dark_color)
-        self.lbl_icon.configure(text="🔮")
         self.lbl_fortune_title.configure(text="พร้อมรับคำทำนาย")
-        self.lbl_body.configure(text="✨ ระบบเชื่อมต่อกับ Server เรียบร้อยแล้ว ✨", text_color="#4A4A4A")
-        self.fetch_btn.configure(state="normal", text="🔮 รับคำทำนาย", fg_color="#8A2BE2")
+        self.lbl_body.configure(text=" ระบบเชื่อมต่อกับ Server เรียบร้อยแล้ว ", text_color="#4A4A4A")
+        self.fetch_btn.configure(state="normal", text=" รับคำทำนาย", fg_color="#8A2BE2")
 
         self.show_page(self.fortune_frame)
 
@@ -535,17 +559,14 @@ class FortuneGardenApp:
 
     def apply_fortune(self, server_text: str | None):
         if server_text:
-            icon        = "🌟"
-            title       = "คำทำนายจากดวงดาว ✨"
+            title       = "คำทำนาย"
             body        = server_text
             text_color  = "#4A4A4A"
         else:
-            icon        = "⚠️"
             title       = "การเชื่อมต่อขัดข้อง"
             body        = "ขออภัย... ไม่สามารถเชื่อมต่อกับดวงดาวได้\n(กรุณาตรวจสอบว่าเปิด server.py หรือยัง)"
             text_color  = "#FF4500"
 
-        self.lbl_icon.configure(text=icon)
         self.lbl_fortune_title.configure(text=title)
         self.lbl_body.configure(text=body, text_color=text_color)
         self.fetch_btn.configure(state="normal", text="🔄 ดูดวงใหม่", fg_color="#8A2BE2")
@@ -557,14 +578,6 @@ class FortuneGardenApp:
         for i in range(10):
             if self.use_png and self.flower_images:
                 lbl = CTkLabel(parent, image=random.choice(self.flower_images), text="", fg_color="transparent")
-            else:
-                lbl = CTkLabel(
-                    parent,
-                    text=random.choice(FLOAT_EMOJIS),
-                    font=("Arial", random.randint(20, 32)),
-                    fg_color="transparent",
-                    text_color=random.choice(["#FF69B4", "#9370DB", "#FFA07A", "#FFD700"]),
-                )
 
             x = random.randint(20, 750)
             y = random.randint(20, 650)
