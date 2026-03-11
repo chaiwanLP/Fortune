@@ -20,14 +20,13 @@ def _get_font(size, bold=False):
     return ImageFont.load_default()
 
 def _get_emoji_font(size):
-    # ฟอนต์มาตรฐาน Emoji ของ Windows
     path = "C:/Windows/Fonts/seguiemj.ttf"
     if os.path.exists(path):
         return ImageFont.truetype(path, size)
     return None
 
 # ─────────────────────────────────────────
-# 2. ฟังก์ชันวาดข้อความผสม Emoji (แก้ปัญหาสี่เหลี่ยม)
+# 2. ฟังก์ชันวาดข้อความผสม Emoji  
 # ─────────────────────────────────────────
 def draw_text_with_emojis(draw, text, pos, font, emoji_font, fill):
     """ วาดข้อความที่มี Emoji ผสมอยู่ โดยสลับฟอนต์ให้อัตโนมัติ """
@@ -35,7 +34,7 @@ def draw_text_with_emojis(draw, text, pos, font, emoji_font, fill):
     # แยกส่วนข้อความกับ Emoji (Regex)
     parts = re.findall(r'[^\u2600-\u27BF\U0001f300-\U0001f6ff\U0001f900-\U0001f9ff]+|[\u2600-\u27BF\U0001f300-\U0001f6ff\U0001f900-\U0001f9ff]', text)
     
-    # คำนวณความกว้างทั้งหมดเพื่อหาจุดเริ่ม (สำหรับจัดกึ่งกลาง)
+    # คำนวณความกว้างทั้งหมดเพื่อหาจุดเริ่ม  
     total_w = 0
     for part in parts:
         is_emoji = re.match(r'[\u2600-\u27BF\U0001f300-\U0001f6ff\U0001f900-\U0001f9ff]', part)
@@ -51,7 +50,7 @@ def draw_text_with_emojis(draw, text, pos, font, emoji_font, fill):
         curr_x += draw.textlength(part, font=f)
 
 # ─────────────────────────────────────────
-# 3. ฟังก์ชันตัดบรรทัด (เหมือนเดิม)
+# 3. ฟังก์ชันตัดบรรทัด 
 # ─────────────────────────────────────────
 def break_thai_text(text, max_chars=42):
     lines = []
