@@ -13,7 +13,7 @@
 * 📄 **Export PDF:** บันทึกคำทำนายเก็บไว้ในรูปแบบไฟล์ PDF ที่จัดรูปแบบสวยงาม
 
 ## 🛠 การติดตั้ง (Installation)
-1. ** pip install customtkinter pillow reportlab  **
+1. **pip install customtkinter pillow reportlab**
 2. **Clone โปรเจกต์:**
    ```bash
    git clone [https://github.com/YOUR_USERNAME/FortuneGarden.git](https://github.com/YOUR_USERNAME/FortuneGarden.git)
