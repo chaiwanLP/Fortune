@@ -1,4 +1,4 @@
-# 🌸 Fortune Garden - Thai Zodiac & Fortune Teller
+# 🌸 Fortune Garden - Thai Zodiac & Fortune Telling
 
 **Fortune Garden** เป็นแอปพลิเคชันดูดวงสไตล์ญี่ปุ่นที่พัฒนาด้วยภาษา **Python** และ **CustomTkinter** โดยเน้นความสวยงาม ใช้งานง่าย และรองรับการทำนายดวงชะตาผ่านระบบเครือข่าย (UDP) พร้อมฟีเจอร์การส่งออกผลทำนายเป็นไฟล์ PDF
 
