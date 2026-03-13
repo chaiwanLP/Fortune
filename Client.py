@@ -68,8 +68,9 @@ MONTHS_TH = ["มกราคม","กุมภาพันธ์","มีนา
               "พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม",
               "กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]
 
-TITLE_COLORS  = ["#FF1493", "#9370DB", "#4169E1", "#FF6347", "#FF69B4", "#FFD700"]
-FLOWER_FILES  = ["m1.png", "m2.png", "m3.png", "m4.png", "m5.png"]
+FLOAT_EMOJIS = ["🌸","🌼","🌺","✨","🌷","🦋","🐞","🍀","⭐","🌟"]
+TITLE_COLORS = ["#FF1493","#9370DB","#4169E1","#FF6347","#FF69B4","#FFD700"]
+FLOWER_FILES = ["m1.png","m2.png","m3.png","m4.png","m5.png"]
 
 def adj(c: str, a: int) -> str:
     if not c.startswith("#"): return c
@@ -109,10 +110,10 @@ def calc_naksat(year):
 class FortuneGardenApp:
     def __init__(self):
         self.app = CTk()
-        self.app.title("🌸 Fortune Garden ")
+        self.app.title("🌸 Fortune Garden - ดูดวงสไตล์ญี่ปุ่น")
         self.app.geometry("800x750+400+50")
         self.app.resizable(False, False)
-        self.load_gif_frames("text_from_me.gif")
+
         self.selected_category = None
         self._birth_day   = 1
         self._birth_month = 1
