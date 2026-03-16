@@ -13,7 +13,7 @@ set_window_scaling(1.2)
 # ─────────────────────────────────────────
 #  Server Config
 # ─────────────────────────────────────────
-SERVER_IP   = "10.31.7.102"
+SERVER_IP   = "10.160.80.11"
 SERVER_PORT = 5000
 UDP_TIMEOUT = 5
 
